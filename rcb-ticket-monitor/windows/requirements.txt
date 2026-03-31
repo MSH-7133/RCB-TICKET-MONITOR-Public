@@ -1,0 +1,10 @@
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+selenium>=4.0.0
+webdriver-manager>=4.0.0
+twilio>=9.0.0
+
+# Windows-specific packages
+win10toast>=0.9        # For Windows toast notifications
+pywin32>=306           # For Windows system integration
+urllib3>=2.0.0         # Better connection pool handling

@@ -5,7 +5,7 @@ echo ======================================================================
 echo   RCB Ticket Booking Bot
 echo ======================================================================
 echo.
-echo ⚠️  Make sure tickets are available on the website!
+echo [WARNING]  Make sure tickets are available on the website!
 echo.
 echo Bot will:
 echo   1. Login (you need to enter OTP)

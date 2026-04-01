@@ -9,7 +9,7 @@ echo.
 REM Check if Python is installed
 python --version >nul 2>&1
 if %errorlevel% neq 0 (
-    echo ❌ Python not found!
+    echo [ERROR] Python not found!
     echo.
     echo Please install Python 3.9+ from: https://www.python.org/downloads/
     echo Make sure to check "Add Python to PATH" during installation
@@ -17,7 +17,7 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-echo ✅ Python found:
+echo [OK] Python found:
 python --version
 echo.
 
@@ -25,10 +25,10 @@ REM Create virtual environment if it doesn't exist
 if not exist venv (
     echo Creating virtual environment...
     python -m venv venv
-    echo ✅ Virtual environment created
+    echo [OK] Virtual environment created
     echo.
 ) else (
-    echo ✅ Virtual environment already exists
+    echo [OK] Virtual environment already exists
     echo.
 )
 
@@ -52,7 +52,7 @@ pip install win10toast pywin32
 echo.
 
 echo ======================================================================
-echo   ✅ Installation Complete!
+echo   [OK] Installation Complete!
 echo ======================================================================
 echo.
 echo Next steps:

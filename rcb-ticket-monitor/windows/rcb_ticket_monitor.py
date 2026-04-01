@@ -92,7 +92,7 @@ class RCBTicketMonitor:
         """Load known matches from JSON file"""
         try:
             if os.path.exists(self.known_matches_file):
-                with open(self.known_matches_file, 'r') as f:
+                with open(self.known_matches_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     self.log(f"Loaded {len(data)} known match(es) from {self.known_matches_file}")
                     return data
@@ -106,7 +106,7 @@ class RCBTicketMonitor:
     def save_known_matches(self):
         """Save known matches to JSON file"""
         try:
-            with open(self.known_matches_file, 'w') as f:
+            with open(self.known_matches_file, 'w', encoding='utf-8') as f:
                 json.dump(self.known_matches, f, indent=2)
             self.log(f"Saved {len(self.known_matches)} known match(es) to {self.known_matches_file}")
             return True
@@ -155,7 +155,7 @@ class RCBTicketMonitor:
 
             self.log(f"Booking bot started (PID: {bot_process.pid})", "ALERT")
             self.log("=" * 60, "ALERT")
-            self.log("📺 BOOKING BOT RUNNING - WATCH THE BROWSER WINDOW", "ALERT")
+            self.log("[VIDEO] BOOKING BOT RUNNING - WATCH THE BROWSER WINDOW", "ALERT")
             self.log("=" * 60, "ALERT")
 
             # Stream bot output to monitor log
@@ -169,11 +169,11 @@ class RCBTicketMonitor:
 
             if exit_code == 0:
                 self.log("=" * 60, "ALERT")
-                self.log("✅ BOOKING BOT COMPLETED SUCCESSFULLY!", "ALERT")
+                self.log("[OK] BOOKING BOT COMPLETED SUCCESSFULLY!", "ALERT")
                 self.log("=" * 60, "ALERT")
             else:
                 self.log("=" * 60, "ERROR")
-                self.log(f"❌ Booking bot failed with exit code {exit_code}", "ERROR")
+                self.log(f"[FAIL] Booking bot failed with exit code {exit_code}", "ERROR")
                 self.log("=" * 60, "ERROR")
 
             # Reinitialize browser for continued monitoring
@@ -353,29 +353,29 @@ class RCBTicketMonitor:
                 success = False
                 for attempt in range(retry_count):
                     try:
-                        self.log(f"📱 Sending SMS to {phone_number} (attempt {attempt + 1}/{retry_count})...", "ALERT")
+                        self.log(f"[SMS] Sending SMS to {phone_number} (attempt {attempt + 1}/{retry_count})...", "ALERT")
 
                         message = client.messages.create(
-                            body=f"🚨 URGENT ALERT #{attempt + 1}: RCB TICKETS ARE OUT! Go to https://shop.royalchallengers.com/ticket NOW to book! Tickets are available! Don't miss this!",
+                            body=f"[URGENT] URGENT ALERT #{attempt + 1}: RCB TICKETS ARE OUT! Go to https://shop.royalchallengers.com/ticket NOW to book! Tickets are available! Don't miss this!",
                             to=phone_number,
                             from_=TWILIO_PHONE_NUMBER
                         )
 
-                        self.log(f"✅ SMS sent to {phone_number}! Message SID: {message.sid}", "ALERT")
+                        self.log(f"[OK] SMS sent to {phone_number}! Message SID: {message.sid}", "ALERT")
                         success = True
                         break
 
                     except Exception as e:
-                        self.log(f"❌ SMS attempt {attempt + 1} failed for {phone_number}: {e}", "ERROR")
+                        self.log(f"[FAIL] SMS attempt {attempt + 1} failed for {phone_number}: {e}", "ERROR")
                         if attempt < retry_count - 1:
                             self.log(f"Retrying in 5 seconds...", "INFO")
                             time.sleep(5)
 
                 if not success:
-                    self.log(f"⚠️ All SMS attempts failed for {phone_number}", "ERROR")
+                    self.log(f"[WARN] All SMS attempts failed for {phone_number}", "ERROR")
 
         except Exception as e:
-            self.log(f"❌ Failed to send SMS: {e}", "ERROR")
+            self.log(f"[FAIL] Failed to send SMS: {e}", "ERROR")
 
     def make_phone_call(self):
         """Make phone calls to alert about tickets"""
@@ -398,7 +398,7 @@ class RCBTicketMonitor:
             # Call all configured phone numbers
             for phone_number in YOUR_PHONE_NUMBERS:
                 try:
-                    self.log(f"📞 Making phone call to {phone_number}...", "ALERT")
+                    self.log(f"[CALL] Making phone call to {phone_number}...", "ALERT")
 
                     # Make the call with a simpler, louder message
                     call = client.calls.create(
@@ -408,13 +408,13 @@ class RCBTicketMonitor:
                         machine_detection='DetectMessageEnd'  # Better detection
                     )
 
-                    self.log(f"✅ Phone call initiated to {phone_number}! Call SID: {call.sid}", "ALERT")
+                    self.log(f"[OK] Phone call initiated to {phone_number}! Call SID: {call.sid}", "ALERT")
 
                 except Exception as e:
-                    self.log(f"❌ Failed to call {phone_number}: {e}", "ERROR")
+                    self.log(f"[FAIL] Failed to call {phone_number}: {e}", "ERROR")
 
         except Exception as e:
-            self.log(f"❌ Failed to initialize Twilio client: {e}", "ERROR")
+            self.log(f"[FAIL] Failed to initialize Twilio client: {e}", "ERROR")
 
     def play_alert_sound(self):
         """Play alert sound on Windows"""
@@ -439,7 +439,7 @@ class RCBTicketMonitor:
             alert_msg = f"""
 ╔═══════════════════════════════════════════════════════════╗
 ║                                                           ║
-║          🎟️  NEW MATCH TICKETS AVAILABLE! 🎟️             ║
+║           **  NEW MATCH TICKETS AVAILABLE!  **           ║
 ║                                                           ║
 {matches_text}
 ║                                                           ║
@@ -453,7 +453,7 @@ class RCBTicketMonitor:
             alert_msg = f"""
 ╔═══════════════════════════════════════════════════════════╗
 ║                                                           ║
-║          🎟️  TICKETS AVAILABLE ON RCB WEBSITE! 🎟️         ║
+║          [TICKET]  TICKETS AVAILABLE ON RCB WEBSITE! [TICKET]         ║
 ║                                                           ║
 ║     {url.ljust(53)}║
 ║                                                           ║
@@ -473,10 +473,10 @@ class RCBTicketMonitor:
 
             if new_matches:
                 match_text = ", ".join(new_matches)
-                title = "🚨 NEW RCB TICKETS!"
+                title = "[URGENT] NEW RCB TICKETS!"
                 message = f"New matches:\n{match_text}\n\nGo to {url}"
             else:
-                title = "🎟️ RCB Tickets Available!"
+                title = "[TICKET] RCB Tickets Available!"
                 message = f"Tickets now available!\nGo to {url}"
 
             toaster.show_toast(
@@ -714,7 +714,7 @@ class RCBTicketMonitor:
 
     def monitor(self):
         """Main monitoring loop"""
-        self.log("🚀 Starting RCB Ticket Monitor (Multi-URL)")
+        self.log("[START] Starting RCB Ticket Monitor (Multi-URL)")
         self.log(f"Monitoring {len(self.urls_to_check)} URLs:")
         for url in self.urls_to_check:
             self.log(f"  - {url}")
@@ -755,10 +755,10 @@ class RCBTicketMonitor:
                                 if new_matches:
                                     # NEW MATCH DETECTED!
                                     self.log("=" * 60, "ALERT")
-                                    self.log("🚨 NEW MATCH TICKETS DETECTED!", "ALERT")
+                                    self.log("[URGENT] NEW MATCH TICKETS DETECTED!", "ALERT")
                                     self.log("=" * 60, "ALERT")
                                     for match in new_matches:
-                                        self.log(f"  🆕 {match}", "ALERT")
+                                        self.log(f"  [NEW] {match}", "ALERT")
 
                                     # Send all alerts
                                     self.show_terminal_alert(url, new_matches=new_matches)
@@ -776,16 +776,16 @@ class RCBTicketMonitor:
                                     # AUTO-START BOOKING BOT (if enabled)
                                     if AUTO_LAUNCH_BOT:
                                         self.log("=" * 60, "ALERT")
-                                        self.log("🤖 AUTO-LAUNCHING BOOKING BOT!", "ALERT")
+                                        self.log("[BOT] AUTO-LAUNCHING BOOKING BOT!", "ALERT")
                                         self.log("=" * 60, "ALERT")
                                         bot_success = self.launch_booking_bot()
 
                                         if bot_success:
-                                            self.log("✅ Bot completed successfully - tickets likely booked!", "ALERT")
+                                            self.log("[OK] Bot completed successfully - tickets likely booked!", "ALERT")
                                         else:
-                                            self.log("⚠️ Bot encountered issues - check logs above", "WARNING")
+                                            self.log("[WARN] Bot encountered issues - check logs above", "WARNING")
                                     else:
-                                        self.log("ℹ️  Auto-launch disabled - book tickets manually", "INFO")
+                                        self.log("[INFO]  Auto-launch disabled - book tickets manually", "INFO")
 
                                     # Continue monitoring but with less frequency
                                     self.log("Continuing to monitor for more new matches (check every 5 minutes)")
@@ -793,18 +793,18 @@ class RCBTicketMonitor:
 
                                 else:
                                     # All matches are already known - no alert
-                                    self.log(f"  ✅ Tickets available but all matches already known:")
+                                    self.log(f"  [OK] Tickets available but all matches already known:")
                                     for match in match_names:
                                         self.log(f"    - {match}")
 
                             else:
                                 # Tickets detected but couldn't extract match names
-                                self.log(f"  ⚠️ Tickets available but couldn't extract match names", "WARNING")
+                                self.log(f"  [WARN] Tickets available but couldn't extract match names", "WARNING")
                                 self.log(f"  Details: {details}", "WARNING")
                         else:
-                            self.log(f"  ⏳ No tickets at {url}")
+                            self.log(f"  [WAIT] No tickets at {url}")
                     else:
-                        self.log(f"  ❌ Failed to fetch {url}", "WARNING")
+                        self.log(f"  [FAIL] Failed to fetch {url}", "WARNING")
 
                     # No delay between URLs - check as fast as possible!
 
@@ -818,7 +818,7 @@ class RCBTicketMonitor:
                     time.sleep(self.check_interval)
 
         except KeyboardInterrupt:
-            self.log("\n🛑 Monitoring stopped by user")
+            self.log("\n[STOP] Monitoring stopped by user")
             if self.driver:
                 self.driver.quit()
             sys.exit(0)

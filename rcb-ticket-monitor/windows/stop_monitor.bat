@@ -15,6 +15,6 @@ for /f "tokens=2" %%a in ('tasklist /FI "IMAGENAME eq python.exe" /FO LIST ^| fi
 )
 
 echo.
-echo ✅ Monitor stopped
+echo [OK] Monitor stopped
 echo.
 pause

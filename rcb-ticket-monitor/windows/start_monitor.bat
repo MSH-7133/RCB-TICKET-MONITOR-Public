@@ -8,11 +8,11 @@ echo ======================================================================
 REM Activate virtual environment
 call venv\Scripts\activate.bat
 
-REM Start monitor in background (using pythonw for no console)
-start /B python rcb_ticket_monitor.py 15 > rcb_monitor.log 2>&1
+REM Start monitor (opens new window - minimize it manually, or use start_monitor_hidden.vbs for true background)
+start python rcb_ticket_monitor.py 15
 
 echo.
-echo ✅ Monitor started!
+echo [OK] Monitor started!
 echo.
 echo To view logs: type "view_logs.bat"
 echo To stop: type "stop_monitor.bat"

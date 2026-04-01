@@ -8,7 +8,8 @@ echo ======================================================================
 REM Activate virtual environment
 call venv\Scripts\activate.bat
 
-REM Start monitor (opens new window - minimize it manually, or use start_monitor_hidden.vbs for true background)
+REM Start monitor (opens new window - you can see output in real-time)
+REM For true background with log file, use: start_monitor_hidden.vbs
 start python rcb_ticket_monitor.py 15
 
 echo.

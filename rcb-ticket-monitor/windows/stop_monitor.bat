@@ -4,14 +4,24 @@ REM Stop RCB Ticket Monitor (Windows)
 echo ======================================================================
 echo   Stopping RCB Ticket Monitor
 echo ======================================================================
+echo.
 
-REM Kill Python processes running the monitor
-taskkill /F /IM python.exe /FI "WINDOWTITLE eq rcb_ticket_monitor*" 2>nul
-taskkill /F /IM pythonw.exe /FI "WINDOWTITLE eq rcb_ticket_monitor*" 2>nul
+REM Check if Python is running
+tasklist /FI "IMAGENAME eq python.exe" | findstr /C:"python.exe" >nul
+if %errorlevel%==0 (
+    echo Killing all Python processes...
+    taskkill /F /IM python.exe /T
+    echo [OK] Python processes stopped
+) else (
+    echo [INFO] No Python processes found
+)
 
-REM Also try killing by command line (if process name matches)
-for /f "tokens=2" %%a in ('tasklist /FI "IMAGENAME eq python.exe" /FO LIST ^| findstr /C:"PID:"') do (
-    wmic process where "ProcessId=%%a AND CommandLine like '%%rcb_ticket_monitor%%'" delete 2>nul
+REM Also check for pythonw.exe (hidden mode)
+tasklist /FI "IMAGENAME eq pythonw.exe" | findstr /C:"pythonw.exe" >nul
+if %errorlevel%==0 (
+    echo Killing pythonw processes...
+    taskkill /F /IM pythonw.exe /T
+    echo [OK] Pythonw processes stopped
 )
 
 echo.

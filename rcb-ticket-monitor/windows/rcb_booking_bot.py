@@ -749,8 +749,8 @@ class RCBBookingBot:
         # Track seat selection attempts for fallback strategy
         self.seat_selection_attempts += 1
 
-        # After 20 failed attempts, use relaxed mode (accept any seats)
-        RELAXED_MODE_THRESHOLD = 20
+        # Accept ANY seats immediately (was 20, set to 1 for immediate fallback)
+        RELAXED_MODE_THRESHOLD = 1
         relaxed_mode = self.seat_selection_attempts >= RELAXED_MODE_THRESHOLD
 
         if relaxed_mode:
@@ -765,11 +765,14 @@ class RCBBookingBot:
             time.sleep(0.5)
             self.take_screenshot("11_seat_selection_page")
 
-            # Look for available seats
+            # Look for available seats - try multiple selectors
             seat_selectors = [
                 "//div[contains(@class, 'available')]",
                 "//*[@aria-label='Available seat' or @aria-label='Available']",
-                "//div[contains(@class, 'seat') and not(contains(@class, 'unavailable'))]",
+                "//div[contains(@class, 'seat') and not(contains(@class, 'unavailable')) and not(contains(@class, 'booked'))]",
+                "//button[contains(@class, 'seat') and not(contains(@class, 'unavailable'))]",
+                "//div[contains(@class, 'seat-available')]",
+                "//*[contains(@class, 'available-seat')]",
             ]
 
             available_seats = []
@@ -777,7 +780,7 @@ class RCBBookingBot:
                 try:
                     seats = self.driver.find_elements(By.XPATH, selector)
                     if seats and len(seats) > 0:
-                        self.log(f"Found {len(seats)} available seats")
+                        self.log(f"Found {len(seats)} available seats using selector: {selector[:50]}...")
                         available_seats = seats
                         break
                 except:
@@ -786,10 +789,25 @@ class RCBBookingBot:
             if len(available_seats) < num_seats:
                 self.log(f"Only {len(available_seats)} seats available, need {num_seats}", "WARNING")
                 if len(available_seats) == 0:
-                    return False
+                    # Try one more desperate attempt - find ANY clickable elements that might be seats
+                    self.log("Trying to find any clickable seat elements...", "WARNING")
+                    try:
+                        all_clickable = self.driver.find_elements(By.XPATH, "//*[contains(@class, 'seat')]")
+                        available_seats = [s for s in all_clickable if s.is_displayed() and s.is_enabled()]
+                        self.log(f"Found {len(available_seats)} potentially clickable seats")
+                    except:
+                        pass
+
+                    if len(available_seats) == 0:
+                        return False
 
             # Select best seats using smart selection (with fallback if needed)
             best_seats = self.select_best_seats(available_seats, current_stand, num_seats, relaxed_mode)
+
+            # If smart selection returned nothing, just take the first available seats
+            if not best_seats or len(best_seats) == 0:
+                self.log("Smart selection failed, using first available seats", "WARNING")
+                best_seats = available_seats[:num_seats]
 
             # Click selected seats
             seats_selected = 0

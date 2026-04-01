@@ -5,13 +5,13 @@ Complete end-to-end automation for booking RCB match tickets
 """
 
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.firefox.service import Service
+from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
-from webdriver_manager.chrome import ChromeDriverManager
+import geckodriver_autoinstaller
 import time
 import os
 import sys
@@ -163,70 +163,46 @@ class RCBBookingBot:
             self.log(f"Could not save screenshot: {e}", "WARNING")
 
     def setup_driver(self):
-        """Setup Chrome driver with Windows-specific fixes for timeout issues"""
+        """Setup Firefox driver for Windows"""
         try:
-            chrome_options = Options()
+            # Install geckodriver automatically
+            geckodriver_autoinstaller.install()
+
+            firefox_options = Options()
 
             if BOT_SETTINGS["headless"]:
-                chrome_options.add_argument('--headless=new')
+                firefox_options.add_argument('--headless')
 
-            # Windows-specific arguments (CRITICAL for timeout fix)
-            chrome_options.add_argument('--disable-gpu')  # Important for Windows
-            chrome_options.add_argument('--no-sandbox')
-            chrome_options.add_argument('--disable-dev-shm-usage')
-            chrome_options.add_argument('--disable-software-rasterizer')
-            chrome_options.add_argument('--disable-extensions')
-            chrome_options.add_argument('--window-size=1920,1080')
+            # Firefox preferences for better performance
+            firefox_options.set_preference('dom.webdriver.enabled', False)
+            firefox_options.set_preference('useAutomationExtension', False)
+            firefox_options.set_preference('general.useragent.override',
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0')
 
-            # Timeout settings for Windows
-            chrome_options.add_argument('--timeout=60000')  # 60 seconds
-            chrome_options.add_argument('--dns-prefetch-disable')
-
-            # Stealth settings
-            chrome_options.add_argument('--disable-blink-features=AutomationControlled')
-            chrome_options.add_experimental_option('excludeSwitches', ['enable-logging', 'enable-automation'])
-            chrome_options.add_experimental_option('useAutomationExtension', False)
-            chrome_options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
-
-            # ChromeDriver service with verbose logging
-            service = Service(
-                ChromeDriverManager().install(),
-                service_args=['--verbose']
-            )
-
-            # WINDOWS FIX: Retry logic for ChromeDriver initialization
+            # WINDOWS FIX: Retry logic for WebDriver initialization
             max_retries = 3
             last_error = None
 
             for attempt in range(max_retries):
                 try:
-                    self.log(f"Initializing ChromeDriver (attempt {attempt + 1}/{max_retries})...")
+                    self.log(f"Initializing Firefox WebDriver (attempt {attempt + 1}/{max_retries})...")
 
-                    self.driver = webdriver.Chrome(service=service, options=chrome_options)
+                    self.driver = webdriver.Firefox(options=firefox_options)
 
                     # Set increased timeouts for Windows (multiply by 2)
                     page_timeout = TIMEOUTS.get("page_load", 30) * 2  # Double the timeout
                     self.driver.set_page_load_timeout(page_timeout)
                     self.driver.set_script_timeout(60)
 
-                    # Hide webdriver property
-                    self.driver.execute_cdp_cmd('Page.addScriptToEvaluateOnNewDocument', {
-                        'source': '''
-                            Object.defineProperty(navigator, 'webdriver', {
-                              get: () => undefined
-                            })
-                        '''
-                    })
-
                     # Test connection
                     self.driver.get("about:blank")
 
-                    self.log("Chrome driver initialized successfully (Windows)")
+                    self.log("Firefox driver initialized successfully (Windows)")
                     return True
 
                 except Exception as e:
                     last_error = e
-                    self.log(f"ChromeDriver init attempt {attempt + 1} failed: {e}", "WARNING")
+                    self.log(f"Firefox init attempt {attempt + 1} failed: {e}", "WARNING")
 
                     # Close driver if partially initialized
                     if self.driver:
@@ -246,7 +222,7 @@ class RCBBookingBot:
             return False
 
         except Exception as e:
-            self.log(f"Error setting up ChromeDriver: {e}", "ERROR")
+            self.log(f"Error setting up Firefox WebDriver: {e}", "ERROR")
             self.log("Try: 1) Restart script, 2) Check Windows Firewall, 3) Disable antivirus temporarily", "ERROR")
             return False
 

@@ -1,71 +1,90 @@
 #!/usr/bin/env python3
 """
-Test Firefox WebDriver - Alternative to Chrome
-Firefox doesn't have the same localhost connection issues
+Test Firefox and GeckoDriver Setup (Windows)
+Quick test to verify Firefox WebDriver works on your Windows PC
 """
 
 from selenium import webdriver
-from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.firefox.options import Options
 import geckodriver_autoinstaller
 import time
+import sys
 
-print("="*70)
-print("  Firefox WebDriver Test")
-print("="*70)
-print()
-
-print("Step 1: Installing/locating geckodriver...")
-try:
-    geckodriver_autoinstaller.install()
-    print("✅ Geckodriver ready")
-except Exception as e:
-    print(f"❌ Geckodriver installation failed: {e}")
-    exit(1)
-print()
-
-print("Step 2: Configuring Firefox options...")
-firefox_options = Options()
-# firefox_options.add_argument('--headless')  # Uncomment to run headless
-print("✅ Options configured")
-print()
-
-print("Step 3: Starting Firefox...")
-driver = None
-try:
-    driver = webdriver.Firefox(options=firefox_options)
-    print("✅ Firefox started successfully!")
+def test_firefox():
+    """Test if Firefox and GeckoDriver are working"""
+    print("=" * 70)
+    print("  Firefox WebDriver Windows Test")
+    print("=" * 70)
     print()
 
-    print("Step 4: Testing page load...")
-    driver.set_page_load_timeout(60)
-
-    driver.get("https://www.google.com")
-    time.sleep(2)
-    print(f"✅ Loaded: {driver.title}")
+    print("Step 1: Setting up Firefox options...")
+    firefox_options = Options()
+    # Firefox preferences
+    firefox_options.set_preference('dom.webdriver.enabled', False)
+    firefox_options.set_preference('useAutomationExtension', False)
+    print("✅ Firefox options configured")
     print()
 
-    print("Step 5: Testing RCB website...")
-    driver.get("https://shop.royalchallengers.com")
-    time.sleep(5)
-    print(f"✅ Loaded: {driver.title}")
-    print()
+    print("Step 2: Installing/finding GeckoDriver...")
+    try:
+        geckodriver_autoinstaller.install()
+        print("✅ GeckoDriver ready")
+        print()
+    except Exception as e:
+        print(f"❌ GeckoDriver installation failed: {e}")
+        return False
 
-    print("="*70)
-    print("✅✅✅ FIREFOX WORKS! ✅✅✅")
-    print("="*70)
-    print()
-    print("We can use Firefox for the bot instead of Chrome!")
-    print("Firefox doesn't have the localhost timeout issues.")
+    print("Step 3: Starting Firefox browser...")
+    driver = None
+    try:
+        driver = webdriver.Firefox(options=firefox_options)
+        driver.set_page_load_timeout(60)
+        print("✅ Firefox browser started successfully!")
+        print()
 
-except Exception as e:
-    print(f"❌ Test failed: {e}")
-    print()
-    print("If Firefox also fails, the issue is very deep.")
+        print("Step 4: Testing page load...")
+        driver.get("https://www.google.com")
+        time.sleep(2)
+        print(f"✅ Successfully loaded: {driver.title}")
+        print()
 
-finally:
-    if driver:
-        driver.quit()
-        print("Browser closed.")
+        print("Step 5: Testing RCB website...")
+        driver.get("https://shop.royalchallengers.com")
+        time.sleep(5)
+        print(f"✅ Successfully loaded: {driver.title}")
+        print()
 
-input("\nPress ENTER to exit...")
+        print("=" * 70)
+        print("✅ ALL TESTS PASSED!")
+        print("=" * 70)
+        print()
+        print("Your Windows setup is working correctly!")
+        print("You can now use the RCB Ticket Monitor and Bot with Firefox.")
+        print()
+
+        time.sleep(3)
+        return True
+
+    except Exception as e:
+        print(f"❌ Test failed: {e}")
+        print()
+        print("Troubleshooting:")
+        print("1. Make sure Firefox browser is installed")
+        print("   Download from: https://www.mozilla.org/firefox/")
+        print("2. Run as Administrator if needed")
+        print("3. Check if Firefox is up to date")
+        return False
+
+    finally:
+        if driver:
+            driver.quit()
+            print("Browser closed.")
+
+if __name__ == "__main__":
+    try:
+        success = test_firefox()
+        input("\nPress ENTER to exit...")
+        sys.exit(0 if success else 1)
+    except KeyboardInterrupt:
+        print("\n\nTest cancelled by user")
+        sys.exit(1)

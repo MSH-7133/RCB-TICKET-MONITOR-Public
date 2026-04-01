@@ -6,13 +6,13 @@ Sends sound and terminal alerts when tickets become available
 """
 
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.firefox.service import Service
+from selenium.webdriver.firefox.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
-from webdriver_manager.chrome import ChromeDriverManager
+import geckodriver_autoinstaller
 from bs4 import BeautifulSoup
 import time
 import os
@@ -269,68 +269,44 @@ class RCBTicketMonitor:
             pass  # Don't crash if log rotation fails
 
     def setup_driver(self):
-        """Setup Chrome driver with Windows-specific fixes for timeout issues"""
+        """Setup Firefox driver for Windows"""
         try:
-            chrome_options = Options()
-            # Use new headless mode (better for modern sites)
-            chrome_options.add_argument('--headless=new')
+            # Install geckodriver automatically
+            geckodriver_autoinstaller.install()
 
-            # Windows-specific arguments (CRITICAL for timeout fix)
-            chrome_options.add_argument('--disable-gpu')  # Important for Windows
-            chrome_options.add_argument('--no-sandbox')
-            chrome_options.add_argument('--disable-dev-shm-usage')
-            chrome_options.add_argument('--disable-software-rasterizer')
-            chrome_options.add_argument('--disable-extensions')
-            chrome_options.add_argument('--window-size=1920,1080')
+            firefox_options = Options()
+            # Use headless mode for monitor (runs in background)
+            firefox_options.add_argument('--headless')
 
-            # Timeout settings for Windows
-            chrome_options.add_argument('--timeout=60000')  # 60 seconds
-            chrome_options.add_argument('--dns-prefetch-disable')
+            # Firefox preferences for better performance
+            firefox_options.set_preference('dom.webdriver.enabled', False)
+            firefox_options.set_preference('useAutomationExtension', False)
+            firefox_options.set_preference('general.useragent.override',
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0')
 
-            # Stealth settings to avoid detection
-            chrome_options.add_argument('--disable-blink-features=AutomationControlled')
-            chrome_options.add_experimental_option('excludeSwitches', ['enable-logging', 'enable-automation'])
-            chrome_options.add_experimental_option('useAutomationExtension', False)
-            chrome_options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
-
-            # ChromeDriver service with verbose logging
-            service = Service(
-                ChromeDriverManager().install(),
-                service_args=['--verbose']
-            )
-
-            # WINDOWS FIX: Retry logic for ChromeDriver initialization
+            # WINDOWS FIX: Retry logic for WebDriver initialization
             max_retries = 3
             last_error = None
 
             for attempt in range(max_retries):
                 try:
-                    self.log(f"Initializing ChromeDriver (attempt {attempt + 1}/{max_retries})...")
+                    self.log(f"Initializing Firefox WebDriver (attempt {attempt + 1}/{max_retries})...")
 
-                    self.driver = webdriver.Chrome(service=service, options=chrome_options)
+                    self.driver = webdriver.Firefox(options=firefox_options)
 
                     # Set increased timeouts for Windows
                     self.driver.set_page_load_timeout(60)  # 30 → 60 seconds
                     self.driver.set_script_timeout(60)
 
-                    # Hide webdriver property
-                    self.driver.execute_cdp_cmd('Page.addScriptToEvaluateOnNewDocument', {
-                        'source': '''
-                            Object.defineProperty(navigator, 'webdriver', {
-                              get: () => undefined
-                            })
-                        '''
-                    })
-
                     # Test connection
                     self.driver.get("about:blank")
 
-                    self.log("Chrome driver initialized successfully (Windows stealth mode)")
+                    self.log("Firefox driver initialized successfully (Windows stealth mode)")
                     return True
 
                 except Exception as e:
                     last_error = e
-                    self.log(f"ChromeDriver init attempt {attempt + 1} failed: {e}", "WARNING")
+                    self.log(f"Firefox init attempt {attempt + 1} failed: {e}", "WARNING")
 
                     # Close driver if partially initialized
                     if self.driver:
